@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\Shelter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class PetController extends Controller
 {
@@ -62,6 +63,7 @@ class PetController extends Controller
             'description' => 'required|string',
             'health_info' => 'nullable|string',
             'personality' => 'nullable|string',
+            'primary_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
         $communityShelter = Shelter::firstOrCreate(
@@ -78,11 +80,21 @@ class PetController extends Controller
             ]
         );
 
+        // Handle image upload
+        $imagePath = null;
+        if ($request->hasFile('primary_image')) {
+            $image = $request->file('primary_image');
+            $filename = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+            $imagePath = 'pets/' . $filename;
+            Storage::disk('public')->putFileAs('pets', $image, $filename);
+        }
+
         $pet = Pet::create([
             ...$validated,
             'shelter_id' => $communityShelter->id,
             'owner_id' => Auth::id(),
             'status' => 'available',
+            'primary_image' => $imagePath,
         ]);
 
         return redirect()->route('pets.show', $pet->slug)

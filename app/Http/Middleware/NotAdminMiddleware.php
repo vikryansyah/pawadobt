@@ -13,12 +13,12 @@ class NotAdminMiddleware
     {
         // Ensure user is authenticated
         if (!Auth::check()) {
-            abort(403, 'Silakan login terlebih dahulu.');
+            return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu.');
         }
 
-        // Deny access if user is an admin
+        // Deny access if user is an admin -> send to admin dashboard
         if (Auth::user()->is_admin) {
-            abort(403, 'Admin tidak diizinkan mengakses halaman ini.');
+            return redirect()->route('admin.dashboard')->with('error', 'Admin tidak diizinkan mengakses halaman pengguna.');
         }
 
         return $next($request);

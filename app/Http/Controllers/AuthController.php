@@ -11,7 +11,7 @@ class AuthController extends Controller
 {
     public function showLogin()
     {
-        return view('auth.login');
+        return view('Login');
     }
 
     public function login(Request $request)
@@ -23,10 +23,22 @@ class AuthController extends Controller
 
         $remember = $request->boolean('remember');
 
+        // Log attempt for debugging
+        \Log::info('Login attempt', ['email' => $request->input('email'), 'remember' => $remember]);
+
         if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
+            \Log::info('Login success', ['user_id' => Auth::id(), 'is_admin' => Auth::user()->is_admin]);
+
+            // Cek apakah user adalah admin
+            if (Auth::user()->is_admin) {
+                return redirect()->intended(route('admin.dashboard'))->with('success', 'Berhasil masuk sebagai admin.');
+            }
+
             return redirect()->intended(route('home'))->with('success', 'Berhasil masuk.');
         }
+
+        \Log::warning('Login failed', ['email' => $request->input('email')]);
 
         return back()->withErrors([
             'email' => 'Kredensial tidak valid.',
@@ -35,7 +47,7 @@ class AuthController extends Controller
 
     public function showRegister()
     {
-        return view('auth.register');
+        return view('Register');
     }
 
     public function register(Request $request)
@@ -54,7 +66,7 @@ class AuthController extends Controller
 
         Auth::login($user);
 
-        return redirect()->intended(route('home'))->with('success', 'Registrasi berhasil, selamat datang!');
+        return redirect()->route('login')->with('success', 'Registrasi berhasil! Silakan masuk dengan akun Anda.');
     }
 
     public function logout(Request $request)

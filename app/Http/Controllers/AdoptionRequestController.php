@@ -46,6 +46,9 @@ class AdoptionRequestController extends Controller
 
     public function store(Request $request, Pet $pet)
     {
+        // Log request for debugging
+        \Log::info('Adoption store request', ['user' => Auth::id(), 'pet_id' => $pet->id, 'input' => $request->all()]);
+
         $validated = $request->validate([
             'applicant_name' => 'required|string|max:255',
             'applicant_email' => 'required|email',
@@ -53,21 +56,28 @@ class AdoptionRequestController extends Controller
             'applicant_address' => 'required|string',
             'occupation' => 'nullable|string|max:255',
             'home_type' => 'nullable|string',
-            'has_yard' => 'boolean',
+            // checkbox sends 'on' — accept nullable and coerce later
+            'has_yard' => 'nullable',
             'experience' => 'nullable|string',
             'why_adopt' => 'required|string',
             'other_pets' => 'nullable|string',
         ]);
+        try {
+            $validated['user_id'] = Auth::id();
+            $validated['pet_id'] = $pet->id;
+            $validated['shelter_id'] = $pet->shelter_id;
+            $validated['has_yard'] = $request->has('has_yard');
 
-        $validated['user_id'] = Auth::id();
-        $validated['pet_id'] = $pet->id;
-        $validated['shelter_id'] = $pet->shelter_id;
-        $validated['has_yard'] = $request->has('has_yard');
+            $adoption = AdoptionRequest::create($validated);
 
-        AdoptionRequest::create($validated);
+            \Log::info('Adoption created', ['id' => $adoption->id, 'user' => $adoption->user_id, 'pet' => $adoption->pet_id]);
 
-        return redirect()->route('adoptions.index')
-            ->with('success', 'Permohonan adopsi berhasil dikirim! Shelter akan segera menghubungi Anda.');
+            return redirect()->route('adoptions.index')
+                ->with('success', 'Permohonan adopsi berhasil dikirim! Shelter akan segera menghubungi Anda.');
+        } catch (\Exception $e) {
+            \Log::error('Adoption store error', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            return back()->withInput()->with('error', 'Terjadi kesalahan saat mengirim permohonan. Silakan coba lagi.');
+        }
     }
 
     public function show(AdoptionRequest $adoptionRequest)

@@ -270,12 +270,16 @@
 
         <div class="divider">Atau masuk dengan email</div>
 
-        <form>
+        <form method="POST" action="/login">
+            <?php echo csrf_field(); ?>
             <div class="form-group">
                 <label for="email">Email</label>
                 <div class="input-wrapper">
                     <span class="input-icon">@</span>
-                    <input type="email" id="email" placeholder="Blu3" required>
+                    <input type="email" id="email" name="email" placeholder="email@contoh.com" required value="<?php echo e(old('email')); ?>">
+                    <?php if($errors->has('email')): ?>
+                        <div style="color:#c53030;margin-top:6px;font-size:13px"><?php echo e($errors->first('email')); ?></div>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -283,14 +287,17 @@
                 <label for="password">Password</label>
                 <div class="input-wrapper">
                     <span class="input-icon">🔒</span>
-                    <input type="password" id="password" placeholder="••••••••" required>
+                    <input type="password" id="password" name="password" placeholder="••••••••" required>
+                    <?php if($errors->has('password')): ?>
+                        <div style="color:#c53030;margin-top:6px;font-size:13px"><?php echo e($errors->first('password')); ?></div>
+                    <?php endif; ?>
                     <button type="button" class="toggle-password" onclick="togglePassword()">👁️</button>
                 </div>
             </div>
 
             <div class="remember-forgot">
                 <label class="remember-me">
-                    <input type="checkbox">
+                    <input type="checkbox" name="remember">
                     <span>Ingat saya</span>
                 </label>
                 <a href="#" class="forgot-password">Lupa Password?</a>
@@ -300,7 +307,7 @@
         </form>
 
         <div class="signup-link">
-            Belum punya akun? <a href="#">Daftar Sekarang</a>
+            Belum punya akun? <a href="/register">Daftar Sekarang</a>
         </div>
     </div>
 
